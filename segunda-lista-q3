@@ -1,0 +1,84 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <signal.h>
+
+#define N_TASKS 5
+
+// Estrutura de uma tarefa
+typedef struct {
+    int id; // Identificador da tarefa
+    int period; // Período da tarefa em milissegundos
+    int execution_time; // Tempo de execução da tarefa em milissegundos
+    int remaining_time; // Tempo restante para a tarefa terminar em milissegundos
+} task_t;
+
+// Array com as tarefas
+task_t tasks[N_TASKS];
+
+// Configuração das tarefas
+void setup_tasks() {
+    // Tarefa A
+    tasks[0].id = 1;
+    tasks[0].period = 25000;
+    tasks[0].execution_time = 10000;
+    tasks[0].remaining_time = 10000;
+    
+    // Tarefa B
+    tasks[1].id = 2;
+    tasks[1].period = 25000;
+    tasks[1].execution_time = 8000;
+    tasks[1].remaining_time = 8000;
+    
+    // Tarefa C
+    tasks[2].id = 3;
+    tasks[2].period = 50000;
+    tasks[2].execution_time = 5000;
+    tasks[2].remaining_time = 5000;
+    
+    // Tarefa D
+    tasks[3].id = 4;
+    tasks[3].period = 50000;
+    tasks[3].execution_time = 4000;
+    tasks[3].remaining_time = 4000;
+    
+    // Tarefa E
+    tasks[4].id = 5;
+    tasks[4].period = 100000;
+    tasks[4].execution_time = 2000;
+    tasks[4].remaining_time = 2000;
+}
+
+// Sinalizador de interrupção para o despachante
+void dispatch_signal_handler(int signum) {
+    // Não faz nada, apenas interrompe a chamada do sleep()
+}
+
+// Função principal do despachante
+void dispatcher() {
+    int current_task = 0; // Índice da tarefa atual
+    
+    // Loop infinito
+    while (1) {
+        // Define o sinal de interrupção para o tempo de execução da tarefa atual
+        signal(SIGALRM, dispatch_signal_handler);
+        alarm(tasks[current_task].execution_time / 1000);
+        
+        // Executa a tarefa atual
+        printf("Executando tarefa %d...\n", tasks[current_task].id);
+        usleep(tasks[current_task].execution_time * 1000);
+        
+        // Verifica se a tarefa atual tem mais ciclos
+        if (tasks[current_task].remaining_time > tasks[current_task].execution_time) {
+            // Adiciona o tempo restante da tarefa atual ao próximo período de execução
+            tasks[current_task].remaining_time -= tasks[current_task].execution_time;
+        } else {
+            // Reseta o tempo restante da tarefa atual para o período da tarefa
+            tasks[current_task].remaining_time = tasks[current_task].period;
+        }
+        
+        // Incrementa o índice da tarefa atual
+        current_task = (current_task + 1) % N_TASKS;
+        
+        // Aguarda o próximo período de execução da próxima tarefa
+       
