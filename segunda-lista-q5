@@ -1,0 +1,73 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+typedef struct {
+    int computation_time;  // tempo de computação da tarefa
+    int period;  // período da tarefa
+    int deadline;  // deadline da tarefa
+    int priority;  // prioridade da tarefa
+    int remaining_time;  // tempo restante da tarefa
+    int exec_time;  // tempo de execução da tarefa
+} Task;
+
+int gcd(int a, int b) {  // função auxiliar para calcular o mdc entre dois números
+    if (b == 0) {
+        return a;
+    } else {
+        return gcd(b, a % b);
+    }
+}
+
+int lcm(int a, int b) {  // função auxiliar para calcular o mmc entre dois números
+    return (a * b) / gcd(a, b);
+}
+
+int hyperperiod(Task tasks[], int num_tasks) {  // função para calcular o hyperperíodo
+    int period_lcm = tasks[0].period;
+    for (int i = 1; i < num_tasks; i++) {
+        period_lcm = lcm(period_lcm, tasks[i].period);
+    }
+    return period_lcm;
+}
+
+void sort_by_period(Task tasks[], int num_tasks) {  // função para ordenar as tarefas por período (prioridade)
+    for (int i = 0; i < num_tasks; i++) {
+        for (int j = i + 1; j < num_tasks; j++) {
+            if (tasks[i].period > tasks[j].period) {
+                Task temp = tasks[i];
+                tasks[i] = tasks[j];
+                tasks[j] = temp;
+            }
+        }
+    }
+}
+
+void print_gantt_chart(Task tasks[], int num_tasks, int hyperperiod) {  // função para imprimir o diagrama de Gantt
+    printf("\nDiagrama de Gantt:\n");
+    for (int time = 0; time < hyperperiod; time++) {
+        printf(" %d ", time);
+        for (int i = 0; i < num_tasks; i++) {
+            if (time % tasks[i].period == 0) {  // tarefa iniciou um novo período
+                tasks[i].remaining_time = tasks[i].computation_time;
+            }
+            if (time % tasks[i].period == tasks[i].deadline) {  // tarefa perdeu o deadline
+                printf("|X|");  // marca o deadline perdido
+            } else if (tasks[i].remaining_time > 0) {  // tarefa em execução
+                printf("|%c|", 'A' + i);  // marca a tarefa em execução
+                tasks[i].remaining_time--;
+                tasks[i].exec_time++;
+            } else {  // tarefa não está em execução
+                printf("| |");  // marca um espaço vazio
+            }
+        }
+        printf("\n");
+    }
+}
+
+int rate_monotonic(Task tasks[], int num_tasks) {  // função para executar o algoritmo do Rate Monotonic (RM)
+    int hyperperiod = hyperperiod(tasks, num_tasks);
+    sort_by_period(tasks, num_tasks);
+
+    for (int i = 0; i < num_tasks; i++) {
+        tasks[i].priority = num_tasks - i;  // define a prioridade de cada tarefa
+        if (tasks[i].priority > tasks[i].period) {  // verifica se as tare
